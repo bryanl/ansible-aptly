@@ -1,0 +1,45 @@
+---
+# tasks file for aptly
+
+- name: import aptly repo key
+  become: yes
+  apt_key: id=E083A3782A194991 keyserver=keys.gnupg.net state=present
+
+- name: add aptly debian repository
+  become: yes
+  apt_repository: repo='deb http://repo.aptly.info/ squeeze main' state=present update_cache=yes
+
+- name: install required packages
+  become: yes
+  apt: name={{ item }} state=present
+  with_items:
+    - gnupg2
+    - rng-tools
+    - aptly
+
+# begin key creation tasks (automatically generates and imports a DSA key-pair to get you up and running quickly)
+
+- name: start rngd for entropy creation
+  command: rngd -b -r /dev/urandom creates=/home/{{ aptly_user }}/key.sec
+
+- name: copy gpg key-gen batch file
+  template:
+    src: gpg2_gen_key.j2
+    dest: /home/{{ aptly_user }}/gpg2_gen_key
+    mode: 0644
+
+- name: create key
+  command: gpg --batch --gen-key /home/{{ aptly_user }}/gpg2_gen_key creates=/home/{{ aptly_user }}/key.sec
+
+- name: stop random source
+  service:
+    name: rng-tools
+    state: stopped
+
+- name: import pub key to gnupg
+  command: gpg2 --import /home/{{ aptly_user }}/key.pub
+
+# ignore 'already in secret keyring' error
+- name: import sec key to gnupg
+  command: gpg2 --import /home/{{ aptly_user }}/key.sec
+  ignore_errors: yes

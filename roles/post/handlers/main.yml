@@ -1,0 +1,2 @@
+- name: restart aptly
+  service: name=aptly state=restarted enabled=yes

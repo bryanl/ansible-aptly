@@ -1,0 +1,9 @@
+---
+- name: aptly upstart service
+  template: src=etc/init/aptly.conf.j2 dest=/etc/init/aptly.conf
+  notify:
+    - restart aptly
+
+- name: start aptly
+  service: name=aptly state=started enabled=yes
+
