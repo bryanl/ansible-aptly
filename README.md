@@ -1,3 +1,4 @@
-# do-files
+# ansible-aptly
 
-ansible installs aptly and nginx
+Use terraform/ansible to boot an aptly server on DigitalOcean.
+
