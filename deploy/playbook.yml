@@ -1,12 +1,9 @@
 ---
 - name: install aptly
-  hosts: apt-servers
+  hosts: aptly
 
   roles:
-    - role: pre
     - role: ansible-role-aptly
-      become: yes
-      become_user: aptly
       aptly_key_email: bliles@digitalocean.com
       aptly_company_name: DigitalOcean
       aptly_user: aptly
@@ -15,10 +12,10 @@
         default:
           - listen 80
           - server_name _
-          - root "/usr/share/nginx/aptly/public"
+          - root "{{ aptly_home }}/public"
+          - location / { autoindex on; }
           - location /api { proxy_pass http://127.0.0.1:8080/api; }
       nginx_configs:
         http:
           - client_max_body_size 100m
-    - role: post
 

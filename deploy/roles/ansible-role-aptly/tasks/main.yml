@@ -1,45 +1,51 @@
 ---
 # tasks file for aptly
+- name: create aptly user
+  user: name=aptly home={{ aptly_home }}
+
+- name: update apt cache
+  apt: update_cache=yes cache_valid_time=3600
 
 - name: import aptly repo key
   become: yes
+  become_user: root
   apt_key: id=E083A3782A194991 keyserver=keys.gnupg.net state=present
 
 - name: add aptly debian repository
   become: yes
+  become_user: root
   apt_repository: repo='deb http://repo.aptly.info/ squeeze main' state=present update_cache=yes
 
 - name: install required packages
   become: yes
+  become_user: root
   apt: name={{ item }} state=present
   with_items:
     - gnupg2
     - rng-tools
     - aptly
 
-# begin key creation tasks (automatically generates and imports a DSA key-pair to get you up and running quickly)
+- name: check for aptly pub key
+  stat: path={{ aptly_home }}/key.pub
+  register: gpg_pub_key
 
-- name: start rngd for entropy creation
-  command: rngd -b -r /dev/urandom creates=/home/{{ aptly_user }}/key.sec
+- name: check for aptly pub key
+  stat: path={{ aptly_home }}/key.sec
+  register: gpg_sec_key
 
-- name: copy gpg key-gen batch file
-  template:
-    src: gpg2_gen_key.j2
-    dest: /home/{{ aptly_user }}/gpg2_gen_key
-    mode: 0644
+- include: tasks/generate_key.yml
+  when: (not gpg_pub_key.stat.exists) or (not gpg_sec_key.stat.exists)
 
-- name: create key
-  command: gpg --batch --gen-key /home/{{ aptly_user }}/gpg2_gen_key creates=/home/{{ aptly_user }}/key.sec
+- name: set aptly repo directory permissions
+  file: path={{ aptly_home }} mode=0755
 
-- name: stop random source
-  service:
-    name: rng-tools
-    state: stopped
+- name: create aptly configuration file
+  template: src=etc/aptly.conf.j2 dest=/etc/aptly.conf
+  notify: 
+    - restart aptly
 
-- name: import pub key to gnupg
-  command: gpg2 --import /home/{{ aptly_user }}/key.pub
+- name: aptly upstart service
+  template: src=etc/init/aptly.conf.j2 dest=/etc/init/aptly.conf
+  notify:
+    - restart aptly
 
-# ignore 'already in secret keyring' error
-- name: import sec key to gnupg
-  command: gpg2 --import /home/{{ aptly_user }}/key.sec
-  ignore_errors: yes

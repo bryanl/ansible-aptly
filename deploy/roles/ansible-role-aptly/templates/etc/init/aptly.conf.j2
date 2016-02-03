@@ -6,8 +6,8 @@ stop on runlevel [!2345]
 respawn
 umask 022
 chdir /
-setuid root
-setgid root
+setuid aptly
+setgid aptly
 console log # log stdout/stderr to /var/log/upstart/
 
-exec /usr/bin/aptly api serve -listen localhost:8080
+exec /usr/bin/aptly api serve -listen localhost:8080 -config /etc/aptly.conf

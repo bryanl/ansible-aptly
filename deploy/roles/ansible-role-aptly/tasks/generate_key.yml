@@ -1,0 +1,30 @@
+---
+- name: start rngd for entropy creation
+  command: rngd -b -r /dev/urandom
+
+- name: copy gpg key-gen batch file
+  template:
+    src: gpg2_gen_key.j2
+    dest: "{{ aptly_home }}/gpg2_gen_key"
+    mode: 0644
+
+- name: create key
+  command: gpg --batch --gen-key {{ aptly_home }}/gpg2_gen_key creates={{ aptly_home }}/key.sec
+  args:
+    chdir: "{{ aptly_home }}"
+    creates: "{{ aptly_home }}/key.sec"
+
+- name: stop random source
+  service:
+    name: rng-tools
+    state: stopped
+
+- name: import pub key to gnupg
+  command: gpg2 --import {{ aptly_home }}/key.pub
+
+- name: import sec key to gnupg
+  command: gpg2 --import {{ aptly_home }}/key.sec
+  ignore_errors: yes
+
+- name: delete key-gen
+  file: path={{ aptly_home }}/gpg2_gen_key state=absent

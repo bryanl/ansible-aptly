@@ -1,2 +1,5 @@
 ---
-# defaults file for aptly
+aptly_home: "/opt/aptly"
+aptly_default_distribution: trusty
+aptly_default_component: main
+aptly_default_repo: release
