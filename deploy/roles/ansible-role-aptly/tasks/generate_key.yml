@@ -10,6 +10,8 @@
 
 - name: create key
   command: gpg --batch --gen-key {{ aptly_home }}/gpg2_gen_key creates={{ aptly_home }}/key.sec
+  become: true
+  become_user: aptly
   args:
     chdir: "{{ aptly_home }}"
     creates: "{{ aptly_home }}/key.sec"
@@ -20,9 +22,13 @@
     state: stopped
 
 - name: import pub key to gnupg
+  become: true
+  become_user: aptly
   command: gpg2 --import {{ aptly_home }}/key.pub
 
 - name: import sec key to gnupg
+  become: true
+  become_user: aptly
   command: gpg2 --import {{ aptly_home }}/key.sec
   ignore_errors: yes
 
