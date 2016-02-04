@@ -3,6 +3,9 @@
 - name: create aptly user
   user: name=aptly home={{ aptly_home }}
 
+- name: create public directory
+  file: path={{ aptly_home }}/public state=directory mode=0755 owner=aptly group=aptly
+
 - name: update apt cache
   apt: update_cache=yes cache_valid_time=3600
 

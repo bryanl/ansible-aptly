@@ -34,3 +34,6 @@
 
 - name: delete key-gen
   file: path={{ aptly_home }}/gpg2_gen_key state=absent
+
+- name: copy public key to http dir
+  command: cp {{ aptly_home }}/key.pub {{ aptly_home }}/public/do-repo.key
